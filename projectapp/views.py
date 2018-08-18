@@ -1,5 +1,6 @@
 from projectapp.models import Rnpdmodel
-from projectapp.models import Rnpdtoken
+from projectapp.models import Rnpdtoken,NumplateResult
+
 from projectapp.models import Rnpduploadfile
 from projectapp.serializers import RnpdmodelSerializer
 from projectapp.serializers import RnpdtokenSerializer
@@ -15,6 +16,9 @@ from django.contrib.auth.models import User
 import jwt
 from rest_framework.decorators import parser_classes
 from rest_framework.parsers import FileUploadParser, MultiPartParser,JSONParser
+from project import settings
+
+
 
 
 class UserSinup(APIView):
@@ -73,24 +77,65 @@ class Rnpduploadfileview(APIView):
      def post(self,request,format=None):
           
           file_obj = request.data['filename']
+          token_key = request.data['token_key']
+          print("token_key_obj",token_key)
           
-          token_key_obj = request.data['token_key']
-          print("token_key_obj",token_key_obj)
-          
-          
-          tokenrnpd = Rnpdtoken.objects.filter(token_key_obj=token_key)# field name (token_key h)
-          
-          if tokenrnpd is not None:
-               if tokenrnpd.token_key==token_key_obj:
-                  Rnpduploadfile.objects.create(filename=file_obj)
-                  print("image uploaded succesfully",filename)
-             
-                  return Response({"sucess":"true","decoded_token":tokenrnpd}, status=status.HTTP_200_OK)
-               else:
-                   return Response({"sucess":"false","message":"token is not match"}, status=status.HTTP_400_BAD_REQUEST)
+          # taken_key chaeck karna h
 
+          # if token_key is equal h toh image upload karni h
+          #usi image ko micro service pr bejna h
+          # microservice ke number plate result ko db me save karna h
+          # response me number plate ka result or success true bejna h 
+
+          #else
+          # image uload nhi hogi
+          # response false ayega token authentication failed
+  
+          #decode_jwt = jwt.decode(token_key, 'secret', algorithms='HS256')
+          
+          tokenrnpduser = Rnpdtoken.objects.get(token_key=token_key)
+          #print("token_key----------------------",[t.token_key for t in tokenrnpduser  ]) 
+                                   # field name (token_key h) models ka
+         # if (not tokenrnpduser):
+          #   print(" no token_key here",tokenrnpduser) 
+
+             
+          #else:
+           #   token_key == token_key:
+            #  Rnpduploadfile.Objects.create(filename=file_obj)
+             # print("image upload sucessfully")
+
+            #return Response({"sucess":"True","token":token is valid }, status=status.HTTP_400_BAD_REQUEST)
+            
+           
+    
+          if tokenrnpduser is not None:
+                if tokenrnpduser.token_key==token_key:
+                    rnpduploadfile_obj=Rnpduploadfile.objects.create(filename=file_obj)
+                    image_path=settings.BASE_DIR+'/'+str(rnpduploadfile_obj.filename) # Uploaded image complete path
+   
+                    # Call micro service call karni h
+                    files = {'media_file': open(image_path,'rb')}
+
+                    #url="http://35.227.148.145:8890/api/v1/rnpd"
+                    #payload={"email":"visionrival.ai@gmail.com"}
+                    #r = requests.post(url, files=files,data=payload)
+                   # numresult=str(r.json())
+                    numresult="22kaur14ijs2"
+                    plate_resultdb=NumplateResult.objects.create(image_id=rnpduploadfile_obj.id,plate_result=numresult)
+        
+                    print("numresult",numresult) 
+                    print("number palet",plate_resultdb)
+
+                
+
+                    response={"sucess":"image uploaded","image_path": image_path,"plate_resultdb":plate_resultdb.plate_result}
+                    return Response(response, status=status.HTTP_200_OK)
+                else:
+                    return Response({"sucess":"image is not upload","token": token_key}, status=status.HTTP_400_BAD_REQUEST)
           else:
-               return Response({"sucess":"false","message":"Invalid user authentication"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"sucess":"false","token":tokenrnpduser is none }, status=status.HTTP_400_BAD_REQUEST)
+             
 
 
              

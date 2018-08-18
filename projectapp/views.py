@@ -79,35 +79,11 @@ class Rnpduploadfileview(APIView):
           file_obj = request.data['filename']
           token_key = request.data['token_key']
           print("token_key_obj",token_key)
-          
-          # taken_key chaeck karna h
-
-          # if token_key is equal h toh image upload karni h
-          #usi image ko micro service pr bejna h
-          # microservice ke number plate result ko db me save karna h
-          # response me number plate ka result or success true bejna h 
-
-          #else
-          # image uload nhi hogi
-          # response false ayega token authentication failed
-  
-          #decode_jwt = jwt.decode(token_key, 'secret', algorithms='HS256')
-          
+         
           tokenrnpduser = Rnpdtoken.objects.get(token_key=token_key)
           #print("token_key----------------------",[t.token_key for t in tokenrnpduser  ]) 
                                    # field name (token_key h) models ka
-         # if (not tokenrnpduser):
-          #   print(" no token_key here",tokenrnpduser) 
-
-             
-          #else:
-           #   token_key == token_key:
-            #  Rnpduploadfile.Objects.create(filename=file_obj)
-             # print("image upload sucessfully")
-
-            #return Response({"sucess":"True","token":token is valid }, status=status.HTTP_400_BAD_REQUEST)
-            
-           
+         
     
           if tokenrnpduser is not None:
                 if tokenrnpduser.token_key==token_key:

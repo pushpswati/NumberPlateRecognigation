@@ -68,8 +68,18 @@ class Rnpduserlist(APIView):
       def get(self,request,format=None):
           print("checkpoint 1")
           Rnpdmodel_obj = Rnpdmodel.objects.all()
-          serializer = RnpdmodelSerializer(Rnpdmodel_obj,many=True)
+          serializer = RnpdtokenSerializer(Rnpdmodel_obj,many=True)
           return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class Rnpdtokenlistview(APIView):
+      def get(self,request,format=None):
+          print("token aya h kya")
+          Rnpdtoken_obj = Rnpdtoken.objects.all()
+          serializer = RnpdtokenSerializer(Rnpdtoken_obj,many=True)
+          return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
 
 class Rnpduploadfileview(APIView):
 
@@ -78,9 +88,10 @@ class Rnpduploadfileview(APIView):
           
           file_obj = request.data['filename']
           token_key = request.data['token_key']
-          print("token_key_obj",token_key)
+          print("token_key",token_key)
          
           tokenrnpduser = Rnpdtoken.objects.get(token_key=token_key)
+          print("oooooouj6tyyyhhhhhhhhtyytytytyutyutyutytyt")
           #print("token_key----------------------",[t.token_key for t in tokenrnpduser  ]) 
                                    # field name (token_key h) models ka
          
@@ -93,20 +104,25 @@ class Rnpduploadfileview(APIView):
                     # Call micro service call karni h
                     files = {'media_file': open(image_path,'rb')}
 
-                    #url="http://35.227.148.145:8890/api/v1/rnpd"
-                    #payload={"email":"visionrival.ai@gmail.com"}
-                    #r = requests.post(url, files=files,data=payload)
-                   # numresult=str(r.json())
-                    numresult="22kaur14ijs2"
+                    url="http://35.227.148.145:8890/api/v1/rnpd"
+                    payload={"email":"visionrival.ai@gmail.com"}
+                    r = requests.post(url, files=files,data=payload)
+                    numresult=str(r.json())
+                   # numresult="22kaur14ijs2"
                     plate_resultdb=NumplateResult.objects.create(image_id=rnpduploadfile_obj.id,plate_result=numresult)
         
                     print("numresult",numresult) 
                     print("number palet",plate_resultdb)
 
                 
-
-                    response={"sucess":"image uploaded","image_path": image_path,"plate_resultdb":plate_resultdb.plate_result}
-                    return Response(response, status=status.HTTP_200_OK)
+                   
+                    
+                    response={"sucess":"image uploaded","image_path":image_path,"plate_resultdb":plate_resultdb.plate_result,"image_id":rnpduploadfile_obj.id,"result_id": plate_resultdb.id}
+                    result_dic={"success": "True",
+                                "response": response}
+         
+                    
+                    return Response(result_dic, status=status.HTTP_200_OK)
                 else:
                     return Response({"sucess":"image is not upload","token": token_key}, status=status.HTTP_400_BAD_REQUEST)
           else:

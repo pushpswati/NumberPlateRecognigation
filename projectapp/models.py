@@ -13,7 +13,7 @@ class Rnpdmodel(models.Model):
 
 class Rnpdtoken(models.Model):
       created = models.DateTimeField(auto_now_add=True)
-      token_key = models.CharField(unique=True,max_length=100, blank=True, default='')
+      token_key = models.CharField(unique=True, max_length=100, blank=True, default='')
       useremail=models.EmailField(null=True,blank=True)
  
       class Meta:
@@ -25,10 +25,6 @@ class Rnpduploadfile(models.Model):
       useremail=models.EmailField(null=True,blank=True)
 
       
-      
- 
-
-
       class Meta:
           ordering = ('created',)
 

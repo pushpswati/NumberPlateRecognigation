@@ -1,6 +1,5 @@
 from projectapp.models import Rnpdmodel
 from projectapp.models import Rnpdtoken,NumplateResult
-
 from projectapp.models import Rnpduploadfile
 from projectapp.serializers import RnpdmodelSerializer
 from projectapp.serializers import RnpdtokenSerializer
@@ -36,30 +35,48 @@ class Rnpd_Login(APIView):
       def post(self,request, format=None):
           
           serializer = RnpdmodelSerializer(data=request.data)
+          #print(serializer)
 
           email = request.data['useremail']
+          print(email,"email 1")
           
           passwd = request.data['password']
+          print(passwd)
+          
           
 
           # Write your code for check email sssst in db
 
           user = Rnpdmodel.objects.get(useremail=email)
+          print(user,"email 2")
          
           if user is not None:
               if user.password==passwd:
                  print("Login successfull: ",)
-
-                 token_key = jwt.encode({'email': 'useremail'}, 'secret', algorithm='HS256')
                  
-                 Rnpdtoken_obj = Rnpdtoken.objects.create(token_key=token_key)
+                 token_key = jwt.encode({'useremail': email}, 'secret', algorithm='HS256')
+                 print(token_key,"token_key encode code")
                  
-                 return Response({"sucess":"true","token":token_key}, status=status.HTTP_200_OK)
+                 Rnpdtoken_obj = Rnpdtoken.objects.create(token_key=token_key) # select krna save krna,insert kiya
+                 rnpdgettoken = Rnpdtoken.objects.get(token_key=token_key)            
+                # rnpdgettoken = Rnpdmodel.objects.get(token_key=token_key) # only we want a one value that's why we use a get method
+                 #print("get token ")
+                 
+                 if rnpdgettoken is None:
+                    # Rnpdtoken_obj = Rnpdtoken.objects.create(token_key=token_key) # select krna save krna,insert kiya
+                    # rnpdgettoken = Rnpdtoken.objects.get(token_key=token_key)
+                     token_key_value = Rnpdtoken_obj.token_key  # database me se token_key nikali
+                 else: 
+                     
+                     token_key_value = rnpdgettoken.token_key 
+                     print("token is already created") 
+                 
+                 return Response({"sucess":"true","token":token_key_value}, status=status.HTTP_200_OK)
               else:
                   return Response({"sucess":"false","message":"Login not successfull"}, status=status.HTTP_400_BAD_REQUEST)
 
           else:
-               return Response({"sucess":"false","message":"Login not successfull"}, status=status.HTTP_400_BAD_REQUEST)
+               return Response({"sucess":"false","message":"password is  not match"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

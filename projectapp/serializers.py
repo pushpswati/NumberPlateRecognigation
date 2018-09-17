@@ -12,7 +12,7 @@ class RnpdmodelSerializer(serializers.ModelSerializer):
 class RnpdtokenSerializer(serializers.ModelSerializer):
     class Meta:
         model=Rnpdtoken
-        fields=('id','created','token_key')
+        fields=('id','created','token_key','useremail')
 
 class RnpduploadfileSerializer(serializers.ModelSerializer):
     class Meta:

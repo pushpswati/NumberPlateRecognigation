@@ -4,7 +4,7 @@ from django.db import models
 class Rnpdmodel(models.Model):
       created = models.DateTimeField(auto_now_add=True)
       username = models.CharField(max_length=100, blank=True, default='')
-      useremail=models.EmailField(unique=True,null=True,blank=True)
+      useremail= models.EmailField(unique=True,null=True,blank=True)
       password = models.CharField(max_length=10)
       
 
@@ -13,8 +13,8 @@ class Rnpdmodel(models.Model):
 
 class Rnpdtoken(models.Model):
       created = models.DateTimeField(auto_now_add=True)
-      token_key = models.CharField(unique=True, max_length=100, blank=True, default='')
-      useremail=models.EmailField(null=True,blank=True)
+      token_key = models.CharField(unique=True, max_length=100, blank=True)
+      useremail=models.EmailField(unique=True,null=False,blank=True)
  
       class Meta:
           ordering = ('created',)

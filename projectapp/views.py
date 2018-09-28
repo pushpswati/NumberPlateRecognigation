@@ -13,6 +13,7 @@ from rest_framework import generics,permissions
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 import jwt
+from datetime import datetime
 from rest_framework.decorators import parser_classes
 from rest_framework.parsers import FileUploadParser, MultiPartParser,JSONParser
 from project import settings
@@ -21,65 +22,63 @@ from project import settings
 
 
 class UserSinup(APIView):
-      def post(self, request, format=None):
-          serializer = RnpdmodelSerializer(data=request.data)
-          if serializer.is_valid():
-             serializer.save()
-             return Response(serializer.data,status=status.HTTP_201_CREATED)
-          return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, format=None):
+        serializer = RnpdmodelSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class Rnpd_Login(APIView):
      
-      # This is login api
-      def post(self,request, format=None):
-          
-          serializer = RnpdmodelSerializer(data=request.data)
-          #print(serializer)
-
-          email = request.data['useremail']
-          print(email,"email 1")
-          
-          passwd = request.data['password']
-          print(passwd)
-          
+    # This is login api
+    def post(self,request, format=None):
+        serializer = RnpdmodelSerializer(data=request.data)
+        #print(serializer)
+        email = request.data['useremail']
+        print(email,"email 1")
+        passwd = request.data['password']
+        print(passwd)
           
 
-          # Write your code for check email sssst in db
+        # Write your code for check email sssst in db
 
-          user = Rnpdmodel.objects.get(useremail=email)
-          print(user,"email 2")
+        user = Rnpdmodel.objects.get(useremail=email)
+        print(user,"email 2")
          
-          if user is not None:
-              if user.password==passwd:
-                 print("Login successfull: ",)
-                 
-                 token_key = jwt.encode({'useremail': email}, 'secret', algorithm='HS256')
-                 print(token_key,"token_key encode code")
-                 
-                 Rnpdtoken_obj = Rnpdtoken.objects.create(token_key=token_key) # select krna save krna,insert kiya
-                 rnpdgettoken = Rnpdtoken.objects.get(token_key=token_key)            
-                # rnpdgettoken = Rnpdmodel.objects.get(token_key=token_key) # only we want a one value that's why we use a get method
-                 #print("get token ")
-                 
-                 if rnpdgettoken is None:
-                    # Rnpdtoken_obj = Rnpdtoken.objects.create(token_key=token_key) # select krna save krna,insert kiya
-                    # rnpdgettoken = Rnpdtoken.objects.get(token_key=token_key)
-                     token_key_value = Rnpdtoken_obj.token_key  # database me se token_key nikali
-                 else: 
-                     
-                     token_key_value = rnpdgettoken.token_key 
-                     print("token is already created") 
-                 
-                 return Response({"sucess":"true","token":token_key_value}, status=status.HTTP_200_OK)
-              else:
-                  return Response({"sucess":"false","message":"Login not successfull"}, status=status.HTTP_400_BAD_REQUEST)
+        if user is not None:
+            if user.password==passwd:
+                print("Login successfull: ",)
+                #Checking here token_key if already exists
+                try:
+                    rnpdtoken_object = Rnpdtoken.objects.get(useremail=email) # select query db se nikl rha h
+                    print("")
+                except:
+                    # assign none value for rnpd token object
+                    rnpdtoken_object=None
+                # Check rnpdtoken_object is exist or not 
+                if rnpdtoken_object is None:
+                    # Create a jwt token if its here for updated
+                    jwttoken = jwt.encode({'useremail': email,"datetime":str(datetime.now())}, 'secret', algorithm='HS256')
+                    # jwt token assing to db(rnpdtoken_object)
+                    rnpdtoken_object.token_key=jwttoken 
+                    # save jwt token
+                    rnpdtoken_object.save()
+                    # response success true and token key dictionary
+                    return Response({"sucess":"true","token":rnpdtoken_object.token_key}, status=status.HTTP_200_OK)  
+                else:
+                    # if token is not here then create the token (first time)
+                    jwttoken = jwt.encode({'useremail': email,"datetime":str(datetime.now())}, 'secret', algorithm='HS256')
+                    # now we insert the jwttoken or useremail /db me insert kr rhe h
+                    rnpdtoken_object=Rnpdtoken.objects.create(token_key=jwttoken,useremail=email)
+                    # response we get token_key
+                    return Response({"sucess":"true","token":rnpdtoken_object.token_key}, status=status.HTTP_200_OK)
+        else:
+            return Response({"sucess":"false","message":"password is  not match"}, status=status.HTTP_400_BAD_REQUEST)
 
-          else:
-               return Response({"sucess":"false","message":"password is  not match"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
+               
+        
 
 class Rnpduserlist(APIView):
       def get(self,request,format=None):
@@ -121,14 +120,14 @@ class Rnpduploadfileview(APIView):
                     # Call micro service call karni h
                     files = {'media_file': open(image_path,'rb')}
 
-                    url="http://35.227.148.145:8890/api/v1/rnpd"
-                    payload={"email":"visionrival.ai@gmail.com"}
-                    r = requests.post(url, files=files,data=payload)
-                    numresult=str(r.json())
+                  #  url="http://35.227.148.145:8890/api/v1/rnpd"
+                   # payload={"email":"visionrival.ai@gmail.com"}
+                    #r = requests.post(url, files=files,data=payload)
+                   # numresult=str(r.json())
                    # numresult="22kaur14ijs2"
-                    plate_resultdb=NumplateResult.objects.create(image_id=rnpduploadfile_obj.id,plate_result=numresult)
+                    plate_resultdb=NumplateResult.objects.create(image_id=rnpduploadfile_obj.id,plate_result="wer431111")
         
-                    print("numresult",numresult) 
+                    #print("numresult",numresult) 
                     print("number palet",plate_resultdb)
 
                 

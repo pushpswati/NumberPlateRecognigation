@@ -107,13 +107,13 @@ class Rnpduploadfileview(APIView):
           jwttoken = request.data['token_key']
           print("token_key",jwttoken)
          
-          tokenrnpduser = Rnpdtoken.objects.get(token_key=jwttoken)
+          jwttoken = Rnpdtoken.objects.get(token_key=jwttoken)
           print("rnpd token get kiya/select ")
           #print("token_key----------------------",[t.token_key for t in tokenrnpduser  ]) 
                                    # field name (token_key h) models ka
          
     
-          if tokenrnpduser is not None:
+          if jwttoken:
                 
                 try:
                     payload = jwt.decode(jwttoken,'secret',algorithm='HS256')

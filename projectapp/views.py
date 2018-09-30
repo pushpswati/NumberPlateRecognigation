@@ -13,7 +13,7 @@ from rest_framework import generics,permissions
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 import jwt
-from datetime import datetime
+from datetime import datetime,timedelta
 from rest_framework.decorators import parser_classes
 from rest_framework.parsers import FileUploadParser, MultiPartParser,JSONParser
 from project import settings
@@ -55,25 +55,26 @@ class Rnpd_Login(APIView):
                     rnpdtoken_object = Rnpdtoken.objects.get(useremail=email) # select query db se nikl rha h
                     print("")
                 except:
-                    # assign none value for rnpd token object
+                        # assign none value for rnpd token object
                     rnpdtoken_object=None
-                # Check rnpdtoken_object is exist or not 
-                if rnpdtoken_object is None:
-                    # Create a jwt token if its here for updated
+                       # Check rnpdtoken_object is exist or not 
+                if rnpdtoken_object:
+                      # Create a jwt token if its here for updated
                     jwttoken = jwt.encode({'useremail': email,"datetime":str(datetime.now())}, 'secret', algorithm='HS256')
-                    # jwt token assing to db(rnpdtoken_object)
+                    print("token_key genrate",jwttoken)
+                      # jwt token assing to db(rnpdtoken_object)
                     rnpdtoken_object.token_key=jwttoken 
-                    # save jwt token
+                      # save jwt token
                     rnpdtoken_object.save()
-                    # response success true and token key dictionary
-                    return Response({"sucess":"true","token":rnpdtoken_object.token_key}, status=status.HTTP_200_OK)  
+                      # response success true and token key dictionary
+                    return Response({"sucess":"true","token":rnpdtoken_object.token_key,"datetime":str(datetime.now().strftime("%D"))}, status=status.HTTP_200_OK)  
                 else:
                     # if token is not here then create the token (first time)
                     jwttoken = jwt.encode({'useremail': email,"datetime":str(datetime.now())}, 'secret', algorithm='HS256')
                     # now we insert the jwttoken or useremail /db me insert kr rhe h
                     rnpdtoken_object=Rnpdtoken.objects.create(token_key=jwttoken,useremail=email)
                     # response we get token_key
-                    return Response({"sucess":"true","token":rnpdtoken_object.token_key}, status=status.HTTP_200_OK)
+                    return Response({"sucess":"true","token":rnpdtoken_object.token_key,"datetime":str(datetime.now().strftime("%D"))}, status=status.HTTP_200_OK)
         else:
             return Response({"sucess":"false","message":"password is  not match"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -103,48 +104,59 @@ class Rnpduploadfileview(APIView):
      def post(self,request,format=None):
           
           file_obj = request.data['filename']
-          token_key = request.data['token_key']
-          print("token_key",token_key)
+          jwttoken = request.data['token_key']
+          print("token_key",jwttoken)
          
-          tokenrnpduser = Rnpdtoken.objects.get(token_key=token_key)
-          print("oooooouj6tyyyhhhhhhhhtyytytytyutyutyutytyt")
+          tokenrnpduser = Rnpdtoken.objects.get(token_key=jwttoken)
+          print("rnpd token get kiya/select ")
           #print("token_key----------------------",[t.token_key for t in tokenrnpduser  ]) 
                                    # field name (token_key h) models ka
          
     
           if tokenrnpduser is not None:
-                if tokenrnpduser.token_key==token_key:
-                    rnpduploadfile_obj=Rnpduploadfile.objects.create(filename=file_obj)
-                    image_path=settings.BASE_DIR+'/'+str(rnpduploadfile_obj.filename) # Uploaded image complete path
+                
+                try:
+                    payload = jwt.decode(jwttoken,'secret',algorithm='HS256')
+                except (jwt.DecodeError, jwt.ExpiredSignatureError):
+                     
+                  
+                    rnpdtoken_expiregetdatetime=jwttoken.datetime
+                    print(rnpdtoken_expireget_datetime,"old date")    
+
+
+                
+               
+                    
+                rnpduploadfile_obj=Rnpduploadfile.objects.create(filename=file_obj)
+                image_path=settings.BASE_DIR+'/'+str(rnpduploadfile_obj.filename) # Uploaded image complete path
    
                     # Call micro service call karni h
-                    files = {'media_file': open(image_path,'rb')}
+                files = {'media_file': open(image_path,'rb')}
 
                   #  url="http://35.227.148.145:8890/api/v1/rnpd"
                    # payload={"email":"visionrival.ai@gmail.com"}
                     #r = requests.post(url, files=files,data=payload)
                    # numresult=str(r.json())
                    # numresult="22kaur14ijs2"
-                    plate_resultdb=NumplateResult.objects.create(image_id=rnpduploadfile_obj.id,plate_result="wer431111")
+                    
+                plate_resultdb=NumplateResult.objects.create(image_id=rnpduploadfile_obj.id,plate_result="wer4311ssw11")
         
-                    #print("numresult",numresult) 
-                    print("number palet",plate_resultdb)
+                #print("numresult",numresult) 
+                print("number palet",plate_resultdb)
 
                 
                    
                     
-                    response={"sucess":"image uploaded","image_path":image_path,"plate_resultdb":plate_resultdb.plate_result,"image_id":rnpduploadfile_obj.id,"result_id": plate_resultdb.id}
-                    result_dic={"success": "True",
+                response={"sucess":"imageuploaded","image_path":image_path,"plate_resultdb":plate_resultdb.plate_result,"image_id":rnpduploadfile_obj.id,"result_id": plate_resultdb.id}
+                result_dic={"success": "True",
                                 "response": response}
          
                     
-                    return Response(result_dic, status=status.HTTP_200_OK)
-                else:
-                    return Response({"sucess":"image is not upload","token": token_key}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(result_dic, status=status.HTTP_200_OK)
+                
           else:
-                return Response({"sucess":"false","token":tokenrnpduser is none }, status=status.HTTP_400_BAD_REQUEST)
-             
-
+                
+               return Response({'message': 'Token is invalid'}, status=400)
 
              
              

@@ -114,74 +114,64 @@ class Rnpduploadfileview(APIView):
         print("token_key",jwttoken)
         print(type(jwttoken))
 
-        if jwttoken:
-              try:
-                payload = jwt.decode(jwttoken,'secret',algorithm=['HS256'])
-                print(payload,"cheakpoint3")
-                print(type(payload))
-              except:
-                
-               
-               
-                rnpdtoken_previousdatetime=payload['datetime']
-                print(rnpdtoken_previousdatetime,"cheakpoint4")    
-
-                rnpdtoken_nowdatetime=datetime.datetime.now()  # we hav to convert json str to dic
-                print(rnpdtoken_nowdatetime,"cheakpoint5")
-                print(type(rnpdtoken_nowdatetime))
-
-                now_min = rnpdtoken_nowdatetime.hour*60+rnpdtoken_nowdatetime.minute
-                print(now_min,"cheakpoint6")
-                now_date = rnpdtoken_nowdatetime.date()
-                print(now_date,"cheakpoint7")
 
 
-                pre_min = rnpdtoken_previousdatetime.hour*60+rnpdtoken_previousdatetime.minute
-                print(pre_min,"cheakpoint8")
-                pre_date = rnpdtoken_previousdatetime.date()
-                print(pre_date,"cheakpoint9")
+        payload = jwt.decode(jwttoken,'secret',algorithm=['HS256'])
+        print(payload,"cheakpoint3")
+        print(type(payload))
 
-                if str(pre_date)==str(now_date) and (now_min-pre_min)>15:
-                   
-                    
+        rnpdtoken_previousdatetime=payload['datetime']
+        print(rnpdtoken_previousdatetime,"cheakpoint4")    
 
-                    rnpdtoken_object = Rnpdtoken.objects.get(useremail=email)
-                    print(rnpdtoken_object,"cheakpoint10")
-                   
-                    
-                    
-                    jwttoken_expire = jwt.encode({'useremail': email}, 'secret', algorithm='HS256')
-                    print(jwttoken_expire,"cheakpoint11")
-                    print(type(jwttoken_expire))
-                    rnpdtoken_object.token_key=jwttoken_expire 
-                    rnpdtoken_object.save()
-                    return Response({"massage":"token is expire","token":rnpdtoken_object.token_key,"datetime":str(datetime.now().strftime("%D"))}, status=status.HTTP_403_OK) 
-                else:
+        rnpdtoken_nowdatetime=datetime.datetime.now()  # we hav to convert json str to dic
+        print(rnpdtoken_nowdatetime,"cheakpoint5")
+        print(type(rnpdtoken_nowdatetime))
 
-                        rnpduploadfile_obj=Rnpduploadfile.objects.create(filename=file_obj)
-                        print(rnpduploadfile_obj,"cheakpoint12")
-                        image_path=settings.BASE_DIR+'/'+str(rnpduploadfile_obj.filename) # Uploaded image complete path
-                        print(image_path,"cheakpoint13")
-                        # Call micro service call karni h
-                        files = {'media_file': open(image_path,'rb')}
+        now_min = rnpdtoken_nowdatetime.hour*60+rnpdtoken_nowdatetime.minute
+        print(now_min,"cheakpoint6")
+        now_date = rnpdtoken_nowdatetime.date()
+        print(now_date,"cheakpoint7")
 
-                        #  url="http://35.227.148.145:8890/api/v1/rnpd"
-                        # payload={"email":"visionrival.ai@gmail.com"}
-                        #r = requests.post(url, files=files,data=payload)
-                        # numresult=str(r.json())
-                        # numresult="22kaur14ijs2"
 
-                        plate_resultdb=NumplateResult.objects.create(image_id=rnpduploadfile_obj.id,plate_result="wer4311ssw11")
+        pre_min = rnpdtoken_previousdatetime.hour*60+rnpdtoken_previousdatetime.minute
+        print(pre_min,"cheakpoint8")
+        pre_date = rnpdtoken_previousdatetime.date()
+        print(pre_date,"cheakpoint9")
 
-                        #print("numresult",numresult) 
-                        print(plate_resultdb,"cheakpoint14")
-                        return Response({'message':'file uploaded sucessfully'},plate_resultdb, status=status.HTTP_200_OK)
+        if str(pre_date)==str(now_date) and (now_min-pre_min)>15:
+
+            rnpdtoken_object = Rnpdtoken.objects.get(useremail=email)
+            print(rnpdtoken_object,"cheakpoint10")
+
+            jwttoken_expire = jwt.encode({'useremail': email}, 'secret', algorithm='HS256')
+            print(jwttoken_expire,"cheakpoint11")
+            print(type(jwttoken_expire))
+            rnpdtoken_object.token_key=jwttoken_expire 
+            rnpdtoken_object.save()
+            return Response({"massage":"token is expire","token":rnpdtoken_object.token_key,"datetime":str(datetime.now().strftime("%D"))}, status=status.HTTP_403_OK) 
 
         else:
-                 
-                return Response({'message': 'Token is invalid'}, status=400)
+            rnpduploadfile_obj=Rnpduploadfile.objects.create(filename=file_obj)
+            print(rnpduploadfile_obj,"cheakpoint12")
+            image_path=settings.BASE_DIR+'/'+str(rnpduploadfile_obj.filename) # Uploaded image complete path
+            print(image_path,"cheakpoint13")
+            # Call micro service call karni h
+            files = {'media_file': open(image_path,'rb')}
 
-                    
+            #  url="http://35.227.148.145:8890/api/v1/rnpd"
+            # payload={"email":"visionrival.ai@gmail.com"}
+            #r = requests.post(url, files=files,data=payload)
+            # numresult=str(r.json())
+            # numresult="22kaur14ijs2"
+
+            plate_resultdb=NumplateResult.objects.create(image_id=rnpduploadfile_obj.id,plate_result="wer4311ssw11")
+
+            #print("numresult",numresult) 
+            print(plate_resultdb,"cheakpoint14")
+            return Response({'message':'file uploaded sucessfully'},plate_resultdb, status=status.HTTP_200_OK)
+        
+        except:
+           print("Exception jwt")
              
              
 

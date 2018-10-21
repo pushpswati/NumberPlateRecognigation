@@ -13,8 +13,10 @@ from rest_framework import generics,permissions
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 import jwt
+import time
 import json
-from datetime import datetime,timedelta
+from dateutil.parser import parse
+from datetime import datetime,date
 from rest_framework.decorators import parser_classes
 from rest_framework.parsers import FileUploadParser, MultiPartParser,JSONParser
 from project import settings
@@ -99,7 +101,6 @@ class Rnpdtokenlistview(APIView):
 
 
 
-
 class Rnpduploadfileview(APIView):
 
     parser_classes = (MultiPartParser,)
@@ -119,11 +120,23 @@ class Rnpduploadfileview(APIView):
         payload = jwt.decode(jwttoken,'secret',algorithm=['HS256'])
         print(payload,"cheakpoint3")
         print(type(payload))
+        
+        email=payload['useremail']
+        rnpdtoken_object = Rnpdtoken.objects.get(useremail=email)
+
+        # Chech token is match or not 
+        if jwttoken!=str(rnpdtoken_object.token_key):
+            return  Response({"massage":"Token does not match"})
+
 
         rnpdtoken_previousdatetime=payload['datetime']
-        print(rnpdtoken_previousdatetime,"cheakpoint4")    
+        previous_datetime=parse(rnpdtoken_previousdatetime) 
+        print(rnpdtoken_previousdatetime,"cheakpoint4")
+        print(type(rnpdtoken_previousdatetime))  
+        #rnpd_prev_dic = json.loads(rnpdtoken_previousdatetime)
+        #print(type(rnpd_prev_dic))  
 
-        rnpdtoken_nowdatetime=datetime.datetime.now()  # we hav to convert json str to dic
+        rnpdtoken_nowdatetime=datetime.now()  # we hav to convert json str to dic
         print(rnpdtoken_nowdatetime,"cheakpoint5")
         print(type(rnpdtoken_nowdatetime))
 
@@ -133,9 +146,9 @@ class Rnpduploadfileview(APIView):
         print(now_date,"cheakpoint7")
 
 
-        pre_min = rnpdtoken_previousdatetime.hour*60+rnpdtoken_previousdatetime.minute
+        pre_min = previous_datetime.hour*60+previous_datetime.minute
         print(pre_min,"cheakpoint8")
-        pre_date = rnpdtoken_previousdatetime.date()
+        pre_date = previous_datetime.date()
         print(pre_date,"cheakpoint9")
 
         if str(pre_date)==str(now_date) and (now_min-pre_min)>15:
@@ -148,7 +161,7 @@ class Rnpduploadfileview(APIView):
             print(type(jwttoken_expire))
             rnpdtoken_object.token_key=jwttoken_expire 
             rnpdtoken_object.save()
-            return Response({"massage":"token is expire","token":rnpdtoken_object.token_key,"datetime":str(datetime.now().strftime("%D"))}, status=status.HTTP_403_OK) 
+            return Response({"massage":"token is expire","token":rnpdtoken_object.token_key,"datetime":str(datetime.now().strftime("%D"))}) 
 
         else:
             rnpduploadfile_obj=Rnpduploadfile.objects.create(filename=file_obj)
@@ -168,12 +181,9 @@ class Rnpduploadfileview(APIView):
 
             #print("numresult",numresult) 
             print(plate_resultdb,"cheakpoint14")
-            return Response({'message':'file uploaded sucessfully'},plate_resultdb, status=status.HTTP_200_OK)
+            return Response({'message':'file uploaded sucessfully','image_path':image_path}, status=status.HTTP_200_OK)
         
-        except:
-           print("Exception jwt")
-             
-             
+        
 
 
           
